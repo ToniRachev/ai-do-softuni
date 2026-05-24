@@ -38,10 +38,13 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run db:generate` | Generate migration from schema changes |
 | `npm run db:migrate` | Apply pending migrations |
 
-## Features (Phase 1)
+## Features
 
 - Create, read, update, and delete tasks
 - Toggle task completion
 - Priority levels (low, medium, high)
 - Optional description
 - Tasks grouped into To do and Completed sections
+- **Projects**: full CRUD on `/projects`, detail page at `/projects/[id]` with filtered tasks
+- **Categories**: list on `/categories`, detail at `/categories/[id]`; create when adding/editing a task; delete unassigns tasks (does not delete them)
+- Assign optional project and category to each task; pill links navigate to project or category detail

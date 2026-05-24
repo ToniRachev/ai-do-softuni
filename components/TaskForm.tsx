@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { ActionState } from "@/app/actions/tasks";
-import type { Task } from "@/lib/schema";
+import { formatDateForInput } from "@/lib/date-utils";
+import type { Category, Project, Task } from "@/lib/schema";
 
 const initialState: ActionState = { success: false };
+
+const NEW_CATEGORY_VALUE = "__new__";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-200/80 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 shadow-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20";
@@ -17,27 +20,51 @@ type TaskFormProps = {
     formData: FormData,
   ) => Promise<ActionState>;
   task?: Task;
+  projects: Project[];
+  categories: Category[];
+  defaultProjectId?: number;
+  defaultCategoryId?: number;
   submitLabel: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 };
 
+function initialCategoryMode(
+  task: Task | undefined,
+  defaultCategoryId: number | undefined,
+): string {
+  if (task?.categoryId) return String(task.categoryId);
+  if (defaultCategoryId) return String(defaultCategoryId);
+  return "";
+}
+
 export function TaskForm({
   action,
   task,
+  projects,
+  categories,
+  defaultProjectId,
+  defaultCategoryId,
   submitLabel,
   onSuccess,
   onCancel,
 }: TaskFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const formRef = useRef<HTMLFormElement>(null);
+  const [categoryMode, setCategoryMode] = useState(() =>
+    initialCategoryMode(task, defaultCategoryId),
+  );
 
   useEffect(() => {
     if (state.success) {
       formRef.current?.reset();
+      setCategoryMode(initialCategoryMode(undefined, defaultCategoryId));
       onSuccess?.();
     }
-  }, [state.success, onSuccess]);
+  }, [state.success, onSuccess, defaultCategoryId]);
+
+  const selectedProjectId = task?.projectId ?? defaultProjectId ?? "";
+  const isNewCategory = categoryMode === NEW_CATEGORY_VALUE;
 
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
@@ -70,6 +97,20 @@ export function TaskForm({
           defaultValue={task?.description ?? ""}
           placeholder="Add details..."
           className={`${inputClassName} resize-y`}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="dueDate" className="mb-1.5 block text-sm font-medium text-zinc-700">
+          Due date
+          <span className="ml-1 font-normal text-zinc-400">(optional)</span>
+        </label>
+        <input
+          id="dueDate"
+          name="dueDate"
+          type="date"
+          defaultValue={formatDateForInput(task?.dueDate ?? null)}
+          className={inputClassName}
         />
       </div>
 
@@ -106,6 +147,62 @@ export function TaskForm({
             </select>
           </div>
         )}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="projectId" className="mb-1.5 block text-sm font-medium text-zinc-700">
+            Project
+            <span className="ml-1 font-normal text-zinc-400">(optional)</span>
+          </label>
+          <select
+            id="projectId"
+            name="projectId"
+            defaultValue={selectedProjectId}
+            className={selectClassName}
+          >
+            <option value="">None</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="categoryMode" className="mb-1.5 block text-sm font-medium text-zinc-700">
+            Category
+            <span className="ml-1 font-normal text-zinc-400">(optional)</span>
+          </label>
+          <select
+            id="categoryMode"
+            value={categoryMode}
+            onChange={(e) => setCategoryMode(e.target.value)}
+            className={selectClassName}
+          >
+            <option value="">None</option>
+            {categories.map((category) => (
+              <option key={category.id} value={String(category.id)}>
+                {category.name}
+              </option>
+            ))}
+            <option value={NEW_CATEGORY_VALUE}>Create new…</option>
+          </select>
+          {!isNewCategory && (
+            <input type="hidden" name="categoryId" value={categoryMode} />
+          )}
+          {isNewCategory && (
+            <input
+              name="newCategoryName"
+              type="text"
+              required
+              maxLength={100}
+              placeholder="New category name"
+              className={`${inputClassName} mt-2`}
+            />
+          )}
+        </div>
       </div>
 
       {state.error && (

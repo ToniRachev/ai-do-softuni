@@ -1,32 +1,50 @@
-import { asc } from "drizzle-orm";
+import { notFound } from "next/navigation";
+import { asc, eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
 import { createTask } from "@/app/actions/tasks";
+import { CategoryDetailHeader } from "@/components/CategoryDetailHeader";
 import { TaskForm } from "@/components/TaskForm";
 import { TaskList } from "@/components/TaskList";
 import { db } from "@/lib/db";
 import { categories, projects } from "@/lib/schema";
 import { getTasksWithMeta, sortTasksByStatus } from "@/lib/tasks-query";
 
-export default async function Home() {
-  const [allProjects, allCategories, allTasks] = await Promise.all([
+type CategoryDetailPageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function CategoryDetailPage({
+  params,
+}: CategoryDetailPageProps) {
+  const { id: idParam } = await params;
+  const categoryId = Number(idParam);
+
+  if (!Number.isInteger(categoryId) || categoryId <= 0) {
+    notFound();
+  }
+
+  const [category] = await db
+    .select()
+    .from(categories)
+    .where(eq(categories.id, categoryId));
+
+  if (!category) {
+    notFound();
+  }
+
+  const [allProjects, allCategories, categoryTasks] = await Promise.all([
     db.select().from(projects).orderBy(asc(projects.name)),
     db.select().from(categories).orderBy(asc(categories.name)),
-    getTasksWithMeta(),
+    getTasksWithMeta({ categoryId }),
   ]);
-  const sortedTasks = sortTasksByStatus(allTasks);
+
+  const sortedTasks = sortTasksByStatus(categoryTasks);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-          Tasks
-        </h1>
-        <p className="mt-2 text-zinc-500">
-          Organize your work with a simple, distraction-free list.
-        </p>
-      </header>
+      <CategoryDetailHeader category={category} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start">
         <section className="glass-card rounded-2xl p-6">
@@ -37,19 +55,20 @@ export default async function Home() {
             action={createTask}
             projects={allProjects}
             categories={allCategories}
+            defaultCategoryId={category.id}
             submitLabel="Add task"
           />
         </section>
 
         <section className="glass-card min-h-[320px] rounded-2xl p-6">
           <h2 className="mb-5 text-sm font-medium uppercase tracking-wider text-zinc-400">
-            Your tasks
+            Category tasks
           </h2>
           <TaskList
             tasks={sortedTasks}
             projects={allProjects}
             categories={allCategories}
-            emptyMessage="No tasks yet."
+            emptyMessage={`No tasks in "${category.name}".`}
           />
         </section>
       </div>
