@@ -8,26 +8,34 @@ import { CategoryDetailHeader } from "@/components/CategoryDetailHeader";
 import { TaskForm } from "@/components/TaskForm";
 import { TaskList } from "@/components/TaskList";
 import { TaskViewTabs } from "@/components/TaskViewTabs";
+import { TaskFilters } from "@/components/TaskFilters";
 import { db } from "@/lib/db";
 import { categories, projects } from "@/lib/schema";
 import {
   filterTasksByView,
   getEmptyMessageForView,
   parseTaskViewParam,
+  applyAdvancedFilters,
+  parseTaskFiltersFromParams,
 } from "@/lib/task-view";
 import { getTasksWithMeta, sortTasksByStatus } from "@/lib/tasks-query";
 
 type CategoryDetailPageProps = {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ view?: string }>;
+  readonly params: Promise<{ id: string }>;
+  readonly searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function CategoryDetailPage({
   params,
   searchParams,
 }: CategoryDetailPageProps) {
-  const { view: viewParam } = await searchParams;
+  const searchParamsObj = await searchParams;
+  const viewParam = typeof searchParamsObj.view === "string" ? searchParamsObj.view : undefined;
   const viewMode = parseTaskViewParam(viewParam);
+  
+  // Parse advanced filters
+  const filters = parseTaskFiltersFromParams(searchParamsObj);
+  
   const { id: idParam } = await params;
   const categoryId = Number(idParam);
 
@@ -51,7 +59,8 @@ export default async function CategoryDetailPage({
   ]);
 
   const sortedTasks = sortTasksByStatus(categoryTasks);
-  const filteredTasks = filterTasksByView(sortedTasks, viewMode);
+  const viewFilteredTasks = filterTasksByView(sortedTasks, viewMode);
+  const filteredTasks = applyAdvancedFilters(viewFilteredTasks, filters);
   const emptyMessage = getEmptyMessageForView(viewMode, {
     scopeName: category.name,
   });
@@ -80,8 +89,9 @@ export default async function CategoryDetailPage({
               Category tasks
             </h2>
             <TaskViewTabs />
-          </div>
-          <TaskList
+          </div>          <div className="mb-6">
+            <TaskFilters />
+          </div>          <TaskList
             tasks={filteredTasks}
             view={viewMode}
             projects={allProjects}

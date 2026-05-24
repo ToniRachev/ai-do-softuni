@@ -47,3 +47,49 @@ export function getDueDateStatus(
   if (due.getTime() === today.getTime()) return "today";
   return "upcoming";
 }
+
+// Date range helpers for filtering
+
+export function isOverdue(date: Date | null | undefined): boolean {
+  if (!date) return false;
+  const today = startOfDay(new Date());
+  const due = startOfDay(date);
+  return due.getTime() < today.getTime();
+}
+
+export function isToday(date: Date | null | undefined): boolean {
+  if (!date) return false;
+  const today = startOfDay(new Date());
+  const due = startOfDay(date);
+  return due.getTime() === today.getTime();
+}
+
+export function isThisWeek(date: Date | null | undefined): boolean {
+  if (!date) return false;
+  const now = new Date();
+  const due = startOfDay(date);
+
+  // Get the start of this week (Monday)
+  const dayOfWeek = now.getDay();
+  const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), diff);
+  weekStart.setHours(0, 0, 0, 0);
+
+  // Get the end of this week (Sunday)
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+
+  return due.getTime() >= startOfDay(weekStart).getTime() && due.getTime() <= startOfDay(weekEnd).getTime();
+}
+
+export function isThisMonth(date: Date | null | undefined): boolean {
+  if (!date) return false;
+  const now = new Date();
+  const due = date;
+  return due.getFullYear() === now.getFullYear() && due.getMonth() === now.getMonth();
+}
+
+export function hasDueDate(date: Date | null | undefined): boolean {
+  return date !== null && date !== undefined;
+}

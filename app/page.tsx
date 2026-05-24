@@ -6,29 +6,38 @@ import { createTask } from "@/app/actions/tasks";
 import { TaskForm } from "@/components/TaskForm";
 import { TaskList } from "@/components/TaskList";
 import { TaskViewTabs } from "@/components/TaskViewTabs";
+import { TaskFilters } from "@/components/TaskFilters";
 import { db } from "@/lib/db";
 import { categories, projects } from "@/lib/schema";
 import {
   filterTasksByView,
   getEmptyMessageForView,
   parseTaskViewParam,
+  applyAdvancedFilters,
+  parseTaskFiltersFromParams,
 } from "@/lib/task-view";
 import { getTasksWithMeta, sortTasksByStatus } from "@/lib/tasks-query";
 
 type HomeProps = {
-  searchParams: Promise<{ view?: string }>;
+  readonly searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function Home({ searchParams }: HomeProps) {
-  const { view: viewParam } = await searchParams;
+  const params = await searchParams;
+  const viewParam = typeof params.view === "string" ? params.view : undefined;
   const viewMode = parseTaskViewParam(viewParam);
+  
+  // Parse advanced filters
+  const filters = parseTaskFiltersFromParams(params);
+  
   const [allProjects, allCategories, allTasks] = await Promise.all([
     db.select().from(projects).orderBy(asc(projects.name)),
     db.select().from(categories).orderBy(asc(categories.name)),
     getTasksWithMeta(),
   ]);
   const sortedTasks = sortTasksByStatus(allTasks);
-  const filteredTasks = filterTasksByView(sortedTasks, viewMode);
+  const viewFilteredTasks = filterTasksByView(sortedTasks, viewMode);
+  const filteredTasks = applyAdvancedFilters(viewFilteredTasks, filters);
   const emptyMessage = getEmptyMessageForView(viewMode);
 
   return (
@@ -61,8 +70,9 @@ export default async function Home({ searchParams }: HomeProps) {
               Your tasks
             </h2>
             <TaskViewTabs />
-          </div>
-          <TaskList
+          </div>          <div className="mb-6">
+            <TaskFilters />
+          </div>          <TaskList
             tasks={filteredTasks}
             view={viewMode}
             projects={allProjects}
