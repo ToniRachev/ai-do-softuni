@@ -7,17 +7,27 @@ import { createTask } from "@/app/actions/tasks";
 import { ProjectDetailHeader } from "@/components/ProjectDetailHeader";
 import { TaskForm } from "@/components/TaskForm";
 import { TaskList } from "@/components/TaskList";
+import { TaskViewTabs } from "@/components/TaskViewTabs";
 import { db } from "@/lib/db";
 import { categories, projects } from "@/lib/schema";
+import {
+  filterTasksByView,
+  getEmptyMessageForView,
+  parseTaskViewParam,
+} from "@/lib/task-view";
 import { getTasksWithMeta, sortTasksByStatus } from "@/lib/tasks-query";
 
 type ProjectDetailPageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ view?: string }>;
 };
 
 export default async function ProjectDetailPage({
   params,
+  searchParams,
 }: ProjectDetailPageProps) {
+  const { view: viewParam } = await searchParams;
+  const viewMode = parseTaskViewParam(viewParam);
   const { id: idParam } = await params;
   const projectId = Number(idParam);
 
@@ -41,6 +51,10 @@ export default async function ProjectDetailPage({
   ]);
 
   const sortedTasks = sortTasksByStatus(projectTasks);
+  const filteredTasks = filterTasksByView(sortedTasks, viewMode);
+  const emptyMessage = getEmptyMessageForView(viewMode, {
+    scopeName: project.name,
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -61,14 +75,18 @@ export default async function ProjectDetailPage({
         </section>
 
         <section className="glass-card min-h-[320px] rounded-2xl p-6">
-          <h2 className="mb-5 text-sm font-medium uppercase tracking-wider text-zinc-400">
-            Project tasks
-          </h2>
+          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">
+              Project tasks
+            </h2>
+            <TaskViewTabs />
+          </div>
           <TaskList
-            tasks={sortedTasks}
+            tasks={filteredTasks}
+            view={viewMode}
             projects={allProjects}
             categories={allCategories}
-            emptyMessage={`No tasks in "${project.name}".`}
+            emptyMessage={emptyMessage}
           />
         </section>
       </div>

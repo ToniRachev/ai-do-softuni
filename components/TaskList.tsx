@@ -1,4 +1,5 @@
 import type { Category, Project, TaskWithMeta } from "@/lib/schema";
+import type { TaskViewMode } from "@/lib/task-view";
 import { TaskItem } from "./TaskItem";
 
 function sortActiveByDueDate(taskList: TaskWithMeta[]): TaskWithMeta[] {
@@ -10,10 +11,23 @@ function sortActiveByDueDate(taskList: TaskWithMeta[]): TaskWithMeta[] {
   });
 }
 
+function sortCompletedByUpdatedAt(taskList: TaskWithMeta[]): TaskWithMeta[] {
+  return [...taskList].sort(
+    (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+  );
+}
+
+const sectionTitles: Record<Exclude<TaskViewMode, "all">, string> = {
+  today: "Today",
+  upcoming: "Upcoming",
+  completed: "Completed",
+};
+
 type TaskListProps = {
   tasks: TaskWithMeta[];
   projects: Project[];
   categories: Category[];
+  view?: TaskViewMode;
   emptyMessage?: string;
 };
 
@@ -54,6 +68,7 @@ export function TaskList({
   tasks,
   projects,
   categories,
+  view = "all",
   emptyMessage = "No tasks yet.",
 }: TaskListProps) {
   if (tasks.length === 0) {
@@ -65,23 +80,39 @@ export function TaskList({
     );
   }
 
-  const active = sortActiveByDueDate(tasks.filter((t) => t.status === "todo"));
-  const completed = tasks.filter((t) => t.status === "done");
+  if (view === "all") {
+    const active = sortActiveByDueDate(tasks.filter((t) => t.status === "todo"));
+    const completed = tasks.filter((t) => t.status === "done");
+
+    return (
+      <div className="space-y-8">
+        <TaskSection
+          title="To do"
+          tasks={active}
+          projects={projects}
+          categories={categories}
+        />
+        <TaskSection
+          title="Completed"
+          tasks={completed}
+          projects={projects}
+          categories={categories}
+        />
+      </div>
+    );
+  }
+
+  const sortedTasks =
+    view === "completed"
+      ? sortCompletedByUpdatedAt(tasks)
+      : sortActiveByDueDate(tasks);
 
   return (
-    <div className="space-y-8">
-      <TaskSection
-        title="To do"
-        tasks={active}
-        projects={projects}
-        categories={categories}
-      />
-      <TaskSection
-        title="Completed"
-        tasks={completed}
-        projects={projects}
-        categories={categories}
-      />
-    </div>
+    <TaskSection
+      title={sectionTitles[view]}
+      tasks={sortedTasks}
+      projects={projects}
+      categories={categories}
+    />
   );
 }

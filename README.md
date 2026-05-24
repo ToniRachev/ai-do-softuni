@@ -45,6 +45,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - Priority levels (low, medium, high)
 - Optional description
 - Tasks grouped into To do and Completed sections
+- **Task views**: switch between Today, Upcoming, All tasks, and Completed on the home page and on project/category task lists (`?view=` query param)
 - **Projects**: full CRUD on `/projects`, detail page at `/projects/[id]` with filtered tasks
 - **Categories**: list on `/categories`, detail at `/categories/[id]`; create when adding/editing a task; delete unassigns tasks (does not delete them)
 - Assign optional project and category to each task; pill links navigate to project or category detail
