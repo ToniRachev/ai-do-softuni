@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f6fb;
+  --foreground: #18181b;
+  --accent: #7c3aed;
+  --accent-muted: #6366f1;
 }
 
 @theme inline {
@@ -12,15 +14,37 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.app-gradient {
+  background:
+    radial-gradient(ellipse 90% 60% at 10% -10%, rgba(139, 92, 246, 0.07), transparent),
+    radial-gradient(ellipse 70% 50% at 90% 0%, rgba(56, 189, 248, 0.06), transparent),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(99, 102, 241, 0.04), transparent),
+    var(--background);
+}
+
+.glass-card {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+/* Native selects use OS menus — force light scheme + readable options */
+select.form-select {
+  color-scheme: light;
+  background-color: #ffffff;
+  color: #18181b;
+}
+
+select.form-select option {
+  background-color: #ffffff;
+  color: #18181b;
 }
