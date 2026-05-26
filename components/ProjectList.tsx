@@ -58,9 +58,12 @@ function ProjectCard({ project }: { project: ProjectWithCount }) {
               {project.description}
             </p>
           )}
-          <p className="mt-2 text-xs text-zinc-400">
-            {project.taskCount} {project.taskCount === 1 ? "task" : "tasks"}
-          </p>
+          <div className="mt-2 flex items-center gap-4 text-xs text-zinc-400">
+            <span>{project.taskCount} {project.taskCount === 1 ? "task" : "tasks"}</span>
+            <span className="text-violet-600 font-medium">
+              {project.completedCount}/{project.taskCount} completed ({project.completionRate}%)
+            </span>
+          </div>
         </div>
         <div className="flex shrink-0 gap-1 opacity-70 transition group-hover:opacity-100">
           <button

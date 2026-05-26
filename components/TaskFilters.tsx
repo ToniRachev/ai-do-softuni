@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import type { TaskFilters } from "@/lib/task-view";
 import { parseTaskFiltersFromParams } from "@/lib/task-view";
 
@@ -61,22 +61,52 @@ function TaskFiltersInner() {
   );
 
   const hasActiveFilters = filters.status || filters.priority || filters.dueDate;
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/50 p-3">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-xs font-medium text-zinc-700">Filters</h3>
+    <div className="relative">
+      {/* Filter Toggle Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="inline-flex items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 py-2 text-xs font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50"
+      >
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+          />
+        </svg>
+        Filters
         {hasActiveFilters && (
-          <Link
-            href={buildClearFiltersUrl(pathname, searchParams)}
-            className="text-xs font-medium text-zinc-500 transition hover:text-zinc-700"
-          >
-            Clear all
-          </Link>
+          <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-xs text-white">
+            {[filters.status, filters.priority?.length, filters.dueDate].filter(Boolean).length}
+          </span>
         )}
-      </div>
+      </button>
 
-      <div className="space-y-3">
+      {/* Filters Dropdown Panel */}
+      {isOpen && (
+        <div className="absolute left-0 top-full z-50 mt-2 min-w-[320px] rounded-lg border border-zinc-200/80 bg-zinc-50/50 p-3 shadow-lg">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-xs font-medium text-zinc-700">Filters</h3>
+            {hasActiveFilters && (
+              <Link
+                href={buildClearFiltersUrl(pathname, searchParams)}
+                className="text-xs font-medium text-zinc-500 transition hover:text-zinc-700"
+              >
+                Clear all
+              </Link>
+            )}
+          </div>
+
+          <div className="space-y-3">
         {/* Status Filter */}
         <div>
           <label htmlFor="statusFilter" className="block text-xs font-medium text-zinc-600 mb-1.5">
@@ -166,7 +196,9 @@ function TaskFiltersInner() {
             <option value="no-due-date">No due date</option>
           </select>
         </div>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -175,7 +207,7 @@ export function TaskFilters() {
   return (
     <Suspense
       fallback={
-        <div className="h-40 w-full animate-pulse rounded-lg bg-zinc-100" aria-hidden />
+        <div className="h-10 w-24 animate-pulse rounded-md bg-zinc-100" aria-hidden />
       }
     >
       <TaskFiltersInner />

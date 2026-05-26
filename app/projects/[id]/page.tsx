@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 import { createTask } from "@/app/actions/tasks";
 import { ProjectDetailHeader } from "@/components/ProjectDetailHeader";
-import { TaskForm } from "@/components/TaskForm";
+import { TaskFormModal } from "@/components/TaskFormModal";
 import { TaskList } from "@/components/TaskList";
 import { TaskViewTabs } from "@/components/TaskViewTabs";
 import { TaskFilters } from "@/components/TaskFilters";
@@ -69,29 +69,27 @@ export default async function ProjectDetailPage({
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <ProjectDetailHeader project={project} />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start">
-        <section className="glass-card rounded-2xl p-6">
-          <h2 className="mb-5 text-sm font-medium uppercase tracking-wider text-zinc-400">
-            New task
-          </h2>
-          <TaskForm
-            action={createTask}
-            projects={allProjects}
-            categories={allCategories}
-            defaultProjectId={project.id}
-            submitLabel="Add task"
-          />
-        </section>
-
-        <section className="glass-card min-h-[320px] rounded-2xl p-6">
+      <div className="grid gap-8 lg:grid-cols-[1fr_minmax(0,380px)] lg:items-start">
+        <section className="glass-card min-h-80 rounded-2xl p-6">
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">
               Project tasks
             </h2>
-            <TaskViewTabs />
-          </div>          <div className="mb-6">
+            <div className="flex items-center gap-3">
+              <TaskViewTabs />
+              <TaskFormModal
+                action={createTask}
+                projects={allProjects}
+                categories={allCategories}
+                defaultProjectId={project.id}
+                triggerLabel="+ New Task"
+              />
+            </div>
+          </div>
+          <div className="mb-6">
             <TaskFilters />
-          </div>          <TaskList
+          </div>
+          <TaskList
             tasks={filteredTasks}
             view={viewMode}
             projects={allProjects}
