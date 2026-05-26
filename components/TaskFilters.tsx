@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import type { TaskFilters } from "@/lib/task-view";
 import { parseTaskFiltersFromParams } from "@/lib/task-view";
 
@@ -62,9 +62,26 @@ function TaskFiltersInner() {
 
   const hasActiveFilters = filters.status || filters.priority || filters.dueDate;
   const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close filter when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isOpen]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       {/* Filter Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -93,7 +110,7 @@ function TaskFiltersInner() {
 
       {/* Filters Dropdown Panel */}
       {isOpen && (
-        <div className="absolute left-0 top-full z-50 mt-2 min-w-[320px] rounded-lg border border-zinc-200/80 bg-zinc-50/50 p-3 shadow-lg">
+        <div className="absolute left-0 top-full z-50 mt-2 min-w-[320px] rounded-lg border border-zinc-200 bg-white p-3 shadow-lg">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-xs font-medium text-zinc-700">Filters</h3>
             {hasActiveFilters && (
